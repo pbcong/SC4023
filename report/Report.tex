@@ -188,16 +188,11 @@ For a given $x$, the query asks: for each $y$, what is $\min(\text{price\_per\_s
 \subsection{Vectorized Out-of-Core Loading}
 \label{sec:vectorized}
 
-For scenarios where the dataset may not fit in memory, we implement a \emph{vectorized loader} inspired by modern column stores such as MonetDB and Vertica. The CSV is read in fixed-size vectors (batches of 4096 rows). For each vector:
+For scenarios where the dataset may not fit in memory, we use a batch-oriented scan similar in spirit to vectorized execution in systems such as MonetDB and Vertica. The routine \texttt{iter\_load\_vectors} reads the CSV in fixed-size batches (default 4,096 rows) and builds a separate \texttt{ColumnStore} for each batch. The loader itself does \emph{not} filter rows or push predicates into the CSV scan---every batch is loaded in full, then processed.
 
-\begin{enumerate}[nosep]
-    \item Parse and cast the raw CSV values into per-column arrays.
-    \item Apply filter predicates column-at-a-time (predicate pushdown).
-    \item If no rows survive the first predicate, skip the entire vector (short-circuit).
-    \item Only surviving rows are appended to the output \texttt{ColumnStore}.
-\end{enumerate}
+For each batch, we run the same pipeline as the full-load path in \texttt{main.py}: derived columns (\texttt{post\_load\_transform}), sorted physical layout, zone maps, and the optimized \texttt{run\_query} from the previous subsection. Filters on \texttt{year}, \texttt{town}, and the $(x,y)$ sweep therefore use the same column-at-a-time \texttt{Query} implementation as Mode~1, but only over the rows currently resident in memory.
 
-This ensures memory usage is bounded: only one vector plus the accumulated result rows are held in memory at any time. In our run on 259,237 rows (64 vectors), 57 vectors (89.1\%) were skipped via short-circuiting, keeping only 6,532 candidates in memory (2.5\% of total rows). In the latest fully optimized runs, vectorized query peak memory was \textbf{0.40 MiB} vs.\ \textbf{1.28 MiB} for the full-load path---a 3.2$\times$ reduction.
+Batches partition the rows: the minimum \texttt{price\_per\_sqm} for a given $(x,y)$ in one batch might not be globally minimal. After each batch query, we merge partial results by retaining, for each $(x,y)$, whichever row has the lower \texttt{price\_per\_sqm} across batches seen so far (materializing the winning row for output). Working set stays bounded by roughly one batch plus this merge state, whereas the full-load path holds the entire table. Quantitative comparison of total time and query-stage peak memory appears in Table~\ref{tab:vec}.
 
 \subsection{Late Materialization}
 
@@ -253,7 +248,7 @@ Full Load + Optimized Query & 3.864 & 0.063 & 3.927 & 1.28\,MiB \\
 
 \subsection{Vectorized Mode Comparison}
 
-Our vectorized mode loads the CSV in vectors of \textbf{4,096 rows}. For each vector, we run the same post-load transform, layout optimizations, and optimized query as the full-load path, then merge the per-vector minima for each $(x,y)$ pair. Table~\ref{tab:vec} compares this vectorized mode against the full-load optimized query.
+Table~\ref{tab:vec} benchmarks the chunked pipeline from Section~\ref{sec:vectorized} (4,096-row batches, same transform/layout/\texttt{run\_query} as full load, merged $(x,y)$ minima) against the full-load optimized query.
 
 \begin{table}[H]
 \centering
@@ -295,7 +290,7 @@ The program successfully executed all three query modes. Selected output metrics
     \item Average resale price in BEDOK (2020): \$411,303
     \item Mode~1 (optimized): \textbf{568} valid $(x, y)$ pairs, query time $0.063 \pm 0.002$\,s, peak 1.28\,MiB
     \item Mode~2 (naive): \textbf{568} valid $(x, y)$ pairs, query time $1.454 \pm 0.067$\,s
-    \item Mode~3 (vectorized): \textbf{568} valid $(x, y)$ pairs, total time $3.107 \pm 0.060$\,s, peak 0.40\,MiB
+    \item Mode~3 (vectorized): \textbf{568} valid $(x, y)$ pairs, total time $5.296 \pm 0.118$\,s, query peak (max over chunks) $0.18$\,MiB
 \end{itemize}
 
 All three modes consistently report 568 valid $(x, y)$ pairs across all benchmark runs, and the naive/optimized verification result is \texttt{MATCH} in every run.

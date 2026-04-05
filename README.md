@@ -12,7 +12,7 @@ Python 3 column-oriented engine (stdlib only) for HDB resale CSVs. It sweeps `(x
 
 - **Zone maps:** Each fixed-size chunk of rows stores min/max per column. If a predicate cannot possibly hold for a chunk (e.g. year outside the zone), that whole chunk is skipped before touching individual rows.
 
-- **Predicate pushdown & chunked loading:** While reading CSV in batches, filters run as early as possible on each chunk so most rows never enter the full store; predicates are ordered so cheap checks can drop a chunk early (short-circuiting).
+- **Chunked loading:** The CSV can be scanned in fixed-size batches; each batch is transformed, layout optimizations apply, and the same query runs per chunk with merged results (lower peak memory than one full load).
 
 - **Late materialization:** Decoding dictionary ids back to strings and building full result rows is deferred until output (or when a row is explicitly needed), so intermediate steps mostly move integers and numeric columns.
 
@@ -23,7 +23,7 @@ Python 3 column-oriented engine (stdlib only) for HDB resale CSVs. It sweeps `(x
 | `main.py` | CLI: matric → config, load CSV, demo query, run engine, write `ScanResult_<matric>.csv` |
 | `column_store.py` | Column store, dictionary encoding, query builder |
 | `csv_loader.py` | CSV → column store |
-| `vectorized_loader.py` | Streaming vectorized load with predicate pushdown |
+| `vectorized_loader.py` | Streaming batch CSV load (fixed-size vectors) |
 | `query_engine.py` | HDB sweep / naive vs optimized paths |
 | `result_writer.py` | CSV output with late materialization |
 
