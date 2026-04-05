@@ -13,7 +13,7 @@ import os
 import time
 import tracemalloc
 from csv_loader import load_csv
-from vectorized_loader import iter_load_vectors, load_and_filter_vectorized
+from vectorized_loader import iter_load_vectors
 from query_engine import run_query, run_query_naive
 
 
