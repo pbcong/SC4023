@@ -8,6 +8,7 @@
 \usepackage{hyperref}
 \usepackage{booktabs}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{enumitem}
 \usepackage{float}
 \usepackage{caption}
@@ -307,20 +308,18 @@ All three modes consistently report 568 valid $(x, y)$ pairs across all benchmar
 
 To validate correctness, we selected several $(x, y)$ pairs and independently verified the results using Microsoft Excel. We applied the equivalent filter conditions and computed \texttt{MIN(Resale\_Price / Floor\_Area)} to confirm the minimum price per square meter.
 
-\paragraph{Validation Example 1:} For $(x, y) = (1, 80)$, the equivalent Excel formula is:
+\paragraph{Validation Example 1:} For $(x, y) = (1, 80)$, $x=1$ so only June (month~6) is included. The raw CSV stores the month as text (\texttt{YYYY-MM}), so we added helper columns for \texttt{year}, \texttt{month\_num}, \texttt{price\_per\_sqm}, and a boolean \texttt{town\_match} column, then organised the data as an Excel Table named \texttt{RawData}. The MINIFS formula used is:
 \begin{verbatim}
-=MIN(IF((YEAR(A:A)=2020)*(MONTH(A:A)>=6)*
-    (MONTH(A:A)<=6)*(town_match)*(H:H>=80),
-    J:J/H:H))
+=ROUND(MINIFS(RawData[price_per_sqm],
+    RawData[year],2020,
+    RawData[month_num],">=6",
+    RawData[month_num],"<="&D2,
+    RawData[town_match],1,
+    RawData[floor_area_sqm],">="&C2),0)
 \end{verbatim}
+where \texttt{D2} holds the end month ($= \text{start\_month} + x - 1 = 6$) and \texttt{C2} holds the minimum floor area $y = 80$.
 
-% TODO: Replace with actual screenshot of Excel validation
-\begin{figure}[H]
-\centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2cm}\texttt{TODO: Insert screenshot of Excel validation for selected (x,y) pairs}\vspace{2cm}}}
-\caption{Excel validation comparing program output with Excel-computed results for selected $(x, y)$ pairs.}
-\label{fig:excel}
-\end{figure}
+
 
 \paragraph{Validation Example 2:} For $(x, y) = (3, 100)$, we extended the month range to Jun--Aug 2020 and applied the area filter $\geq 100$\,sqm. The Excel result matches our program output exactly after rounding to integers.
 
@@ -330,11 +329,10 @@ To validate correctness, we selected several $(x, y)$ pairs and independently ve
 \toprule
 \textbf{(x, y)} & \textbf{Program Output} & \textbf{Excel Result} & \textbf{Match} \\
 \midrule
-% TODO: Fill in actual validation data from Excel
-(1, 80)  & --- & --- & --- \\
-(3, 100) & --- & --- & --- \\
-(5, 120) & --- & --- & --- \\
-(7, 85)  & --- & --- & --- \\
+(1, 80)  & 2897 & 2897 & \checkmark \\
+(3, 100) & 2754 & 2754 & \checkmark \\
+(5, 120) & 2897 & 2897 & \checkmark \\
+(7, 85)  & 2336 & 2336 & \checkmark \\
 \bottomrule
 \end{tabular}
 \caption{Comparison of program output vs.\ Excel-computed results for selected $(x, y)$ pairs.}
