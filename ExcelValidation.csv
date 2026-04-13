@@ -1,0 +1,5 @@
+Pair;x;y;End month;Excel Result;Program Output;Match;Formula
+(1, 80);1;80;6;2897;2897;YES;"=ROUND(MINIFS(RawData[price_per_sqm];RawData[year];2020;RawData[month_num];"">=6"";RawData[month_num];""<=""&D2;RawData[town_match];1;RawData[floor_area_sqm];"">=""&C2);0)"
+(3, 100);3;100;8;2754;2754;YES;"=ROUND(MINIFS(RawData[price_per_sqm];RawData[year];2020;RawData[month_num];"">=6"";RawData[month_num];""<=""&D3;RawData[town_match];1;RawData[floor_area_sqm];"">=""&C3);0)"
+(5, 120);5;120;10;2897;2897;YES;"=ROUND(MINIFS(RawData[price_per_sqm];RawData[year];2020;RawData[month_num];"">=6"";RawData[month_num];""<=""&D4;RawData[town_match];1;RawData[floor_area_sqm];"">=""&C4);0)"
+(7, 85);7;85;12;2336;2336;YES;"=ROUND(MINIFS(RawData[price_per_sqm];RawData[year];2020;RawData[month_num];"">=6"";RawData[month_num];""<=""&D5;RawData[town_match];1;RawData[floor_area_sqm];"">=""&C5);0)"
