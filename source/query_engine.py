@@ -52,7 +52,7 @@ def run_query_naive(store, pre_filters,
 def run_query(store, pre_filters,
               range_col, range_start, x_min, x_max,
               sweep_col, y_min, y_max,
-              agg_col, threshold=None, range_cap=None):
+              agg_col, threshold=None, range_cap=None, verbose=True):
     """
     Optimized query using raw column access.
 
@@ -68,10 +68,12 @@ def run_query(store, pre_filters,
         q = q.filter(col, op, val)
     candidate_rows = q.execute()
 
-    print(f"  Pre-filtered to {len(candidate_rows)} candidate rows")
+    if verbose:
+        print(f"  Pre-filtered to {len(candidate_rows)} candidate rows")
 
     if not candidate_rows:
-        print(f"  Found 0 valid (x, y) pairs")
+        if verbose:
+            print(f"  Found 0 valid (x, y) pairs")
         return {}
 
     # Get raw column arrays for direct access
@@ -126,5 +128,6 @@ def run_query(store, pre_filters,
                 if threshold is None or rounded <= threshold:
                     results[(x, s)] = (run_min_row, rounded)
 
-    print(f"  Found {len(results)} valid (x, y) pairs")
+    if verbose:
+        print(f"  Found {len(results)} valid (x, y) pairs")
     return results

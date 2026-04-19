@@ -200,11 +200,7 @@ def main():
         threshold=THRESHOLD, range_cap=12,
     )
 
-    # Demo: Generic Query API
-    print("=" * 50)
-    print("DEMO: Generic Query API")
-    print("=" * 50)
-
+    # Load data
     print("Loading data...")
     t0 = time.time()
     store = load_csv(input_file, schema=HDB_SCHEMA)
@@ -314,7 +310,7 @@ def main():
                 chunk_store, use_sort=use_sort, use_zone_maps=use_zone_maps)
 
             (partial, t_part, peak_part) = _measure_time_and_peak_mem(
-                run_query, chunk_store, **query_kwargs)
+                run_query, chunk_store, **query_kwargs, verbose=False)
             query_time_sum += t_part
             if peak_part > query_peak_max:
                 query_peak_max = peak_part
