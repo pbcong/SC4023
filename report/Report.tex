@@ -41,10 +41,9 @@
     \large HDB Resale Flat Column-Store Query Engine
 }
 \author{
-    % TODO: Fill in your group members' names and matriculation numbers
     Pham Ba Cong (Matriculation No.: U2331760J) \\
-    abc (Matriculation No.:) \\
-    abc (Matriculation No.:)
+    Tobias Glatz (Matriculation No.: N2504962B) \\
+    Aylin Stecher (Matriculation No.: N2500024C)
 }
 \date{}
 
@@ -128,7 +127,11 @@ Town & BDK & BKP & CLM & CCK & HGN & JRW & PSR & TPN & WDL & YSH \\
 
 \subsection{Column-at-a-Time Filtering}
 
-Our \texttt{Query} class applies filter predicates one column at a time via a chainable API (\texttt{.filter("year","==",y).filter("town","in",towns)...min("price\_per\_sqm")}). Only the relevant column arrays are iterated; surviving row indices are progressively narrowed. For string columns, values are resolved to dictionary codes before comparison, making filters integer set-membership tests.
+Our \texttt{Query} class applies filter predicates one column at a time via a chainable API:
+\begin{verbatim}
+.filter("year","==",y).filter("town","in",towns)...min("price_per_sqm")
+\end{verbatim}
+Only the relevant column arrays are iterated; surviving row indices are progressively narrowed. For string columns, values are resolved to dictionary codes before comparison, making filters integer set-membership tests.
 
 \subsection{Naive Baseline (\texttt{run\_query\_naive})}
 
@@ -166,7 +169,7 @@ Throughout the pipeline, rows are represented as indices into column arrays. Ful
 We implemented two additional column-store optimizations to improve query performance.
 
 \paragraph{Sorted Column Layout.}
-All columns are physically sorted by \texttt{(year, month\_num, town)} via \texttt{sort\_by()}. This clusters records by the most common filter predicates. When combined with zone maps (below), sorted layout enables the zone map to skip entire contiguous regions of irrelevant data with high precision.
+All columns are physically sorted by \texttt{(year, month\_num, town)} via \texttt{sort\_by()}. This clusters records by the most common filter predicates. When combined with zone maps (below), sorted layout enables the zone map to skip entire contiguous regions of irrelevant data.
 
 \paragraph{Zone Maps (Min-Max Indexes).}
 For each block of 4,096 rows, we store the minimum and maximum value of key columns (\texttt{year}, \texttt{month\_num}, \texttt{town}, \texttt{floor\_area\_sqm}). Before scanning any block, the query engine checks whether the block's min-max range overlaps the filter predicate. Non-overlapping blocks are skipped entirely. Zone maps produced the largest single-optimization speedup: the optimized query dropped from 0.769\,s to 0.063\,s ($\mathbf{12.2\times}$ faster), and peak memory from 10.07\,MiB to 1.28\,MiB ($\mathbf{7.9\times}$ lower).
@@ -204,7 +207,7 @@ Tables~\ref{tab:perf} and \ref{tab:vec} summarise full-load and vectorized modes
 \midrule
 Full Load + Naive Query     & 3.267 & 1.343 & 4.610 & 1.28\,MiB \\
 Full Load + Optimized Query & 3.267 & 0.060 & 3.327 & 1.28\,MiB \\
-Vectorized + Optimized      & \multicolumn{2}{c}{(64 chunks, query sum 0.050\,s)} & 7.321 & 0.18\,MiB \\
+Vectorized + Optimized      & --- & --- & 7.321 & 0.18\,MiB \\
 \bottomrule
 \end{tabular}
 \caption{Execution modes. Optimized query is $22.5\times$ faster than naive; vectorized mode trades $2.2\times$ slower total time for $7.1\times$ lower query peak memory.}
@@ -292,8 +295,7 @@ The generated \texttt{ScanResult\_U2331760J.csv} file contains all 568 valid $(x
 \newpage
 \begin{center}
     {\LARGE \textbf{CONTRIBUTION FORM}} \\[0.5cm]
-    % TODO: Fill in group number
-    Group Number: \_\_\_\_\_\_
+    Group Number: 35
 \end{center}
 
 \vspace{0.3cm}
@@ -305,12 +307,11 @@ The generated \texttt{ScanResult\_U2331760J.csv} file contains all 568 valid $(x
 \hline
 \textbf{Name} & \textbf{Matriculation Number} & \textbf{Detailed Individual Contribution} & \textbf{Percentage (100\% in total)} \\
 \hline
-% TODO: Fill in member details
 Pham Ba Cong & U2331760J & Discussion, implementation, report writing & 34\% \\
 \hline
- &  & Discussion, testing code, report writing & 33\% \\
+Tobias Glatz & N2504962B & Discussion, testing code, report writing & 33\% \\
 \hline
- &  & Discussion, testing code, report writing & 33\% \\
+Aylin Stecher & N2500024C & Discussion, testing code, report writing & 33\% \\
 \hline
 \end{tabular}
 \end{table}
@@ -321,11 +322,12 @@ Pham Ba Cong & U2331760J & Discussion, implementation, report writing & 34\% \\
 \vspace{0.5cm}
 
 \begin{tabular}{p{7cm}p{7cm}}
-\includegraphics[height=1.8cm]{cong.jpg} & \\[-0.2cm]
+\includegraphics[height=1.8cm]{cong.jpg} & \includegraphics[height=1.8cm]{glatz.jpg} \\[-0.2cm]
 \rule{6cm}{0.4pt} & \rule{6cm}{0.4pt} \\
-Pham Ba Cong (Member 1) & Name and Signature of Member 2 \\[1.8cm]
-\rule{6cm}{0.4pt} & \rule{6cm}{0.4pt} \\
-Name and Signature of Member 3 & Name and Signature of Member 4 \\
+Pham Ba Cong (Member 1) & Tobias Glatz (Member 2) \\[1.8cm]
+\includegraphics[height=1.8cm]{aylin.jpg} & \\[-0.2cm]
+\rule{6cm}{0.4pt} & \\
+Aylin Stecher (Member 3) & \\
 \end{tabular}
 
 \end{document}

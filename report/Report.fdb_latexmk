@@ -1,7 +1,7 @@
 # Fdb version 4
-["pdflatex"] 1776619092.46111 "/mnt/e/Desktop/SC4023/project/report/Report.tex" "Report.pdf" "Report" 1776619095.85719 0
+["pdflatex"] 1776665082.46709 "/mnt/e/Desktop/SC4023/project/report/Report.tex" "Report.pdf" "Report" 1776665086.61513 0
   "/etc/texmf/web2c/texmf.cnf" 1774796055.44301 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/mnt/e/Desktop/SC4023/project/report/Report.tex" 1776619083.45245 16845 690cab389dae0d0b743261aa09b3053a ""
+  "/mnt/e/Desktop/SC4023/project/report/Report.tex" 1776665068.7354 16773 ccea992969db7c433080ff0c201c9ef9 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/tcrm1095.tfm" 1136768653 1536 02c06700a42be0f5a28664c7273f82e7 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/tctt1095.tfm" 1136768653 1536 52374f37d7a013fe5a15c958e7ebe485 ""
@@ -185,10 +185,12 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1707919699 40399 f2c302f7d2af602abb742093540a5834 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1774796084.58403 5472669 54eaf61a88b6b7896ebd0dac973cb29c ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1774796112 8212756 f22a2e6fab6ea9b1cc4bb7eed38043d8 ""
-  "Report.aux" 1776619095.82289 5996 c95f700f26893c04ec3eb38a75ee811a "pdflatex"
-  "Report.out" 1776619095.83019 3268 7b3df1efadbd9bd463c58fd334196135 "pdflatex"
-  "Report.tex" 1776619083.45245 16845 690cab389dae0d0b743261aa09b3053a ""
+  "Report.aux" 1776665083.80674 5996 20be64460fe56d16c0972fe0b4f300e5 "pdflatex"
+  "Report.out" 1776665083.82694 3268 7b3df1efadbd9bd463c58fd334196135 "pdflatex"
+  "Report.tex" 1776665068.7354 16773 ccea992969db7c433080ff0c201c9ef9 ""
+  "aylin.jpg" 1776664867.39327 2134 0d3c2a84ff56b158e67c8bbdef867bb4 ""
   "cong.jpg" 1776617226.07023 8188 09749b2357780e1f482ffbcea65e630e ""
+  "glatz.jpg" 1776664853.6745 4740 ac92be7034c190e5af68c39fb37b6991 ""
   "screenshot1.png" 1776615933.10898 101991 c6a8f3380147b3dda1f32034067f675c ""
   "screenshot2.png" 1776616014.1084 130232 365b8476bc088ac6270c3392d732c73b ""
   (generated)
