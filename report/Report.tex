@@ -49,7 +49,6 @@
 
 \begin{document}
 \maketitle
-\thispagestyle{empty}
 
 % =============================================================
 \section{Data Storage}
@@ -158,7 +157,7 @@ For a given $x$, the query asks: for each $y$, what is $\min(\text{price\_per\_s
 \subsection{Vectorized Out-of-Core Loading}
 \label{sec:vectorized}
 
-For out-of-core scenarios, \texttt{iter\_load\_vectors} reads the CSV in fixed-size batches (4,096 rows), building a separate \texttt{ColumnStore} per batch. Each batch runs the same transform/layout/zone-map pipeline and \texttt{run\_query} as the full-load path. Partial $(x,y)$ minima are merged across batches, keeping the working set bounded to one batch plus merge state. Table~\ref{tab:vec} compares total time and peak memory.
+For vectorized loading, \texttt{iter\_load\_vectors} reads the CSV in fixed-size batches (4,096 rows), building a separate \texttt{ColumnStore} per batch. Each batch runs the same transform/layout/zone-map pipeline and \texttt{run\_query} as the full-load path. Partial $(x,y)$ minima are merged across batches, keeping the working set bounded to one batch plus merge state. Table~\ref{tab:vec} compares total time and peak memory.
 
 \subsection{Late Materialization}
 
@@ -286,7 +285,7 @@ To validate correctness, we selected several $(x, y)$ pairs and independently ve
 
 \subsection{Output File}
 
-The generated \texttt{ScanResult\_U2331760J.csv} file contains all 568 valid $(x, y)$ pairs sorted in increasing order of $x$, then $y$, as required. Each row includes the full record details for the transaction with the minimum price per square meter for that $(x, y)$ pair. A vectorized variant \texttt{ScanResult\_U2331760J\_vectorized.csv} is also produced, which produces identical results using the out-of-core loading path.
+The generated \texttt{ScanResult\_U2331760J.csv} file contains all 568 valid $(x, y)$ pairs sorted in increasing order of $x$, then $y$, as required. Each row includes the full record details for the transaction with the minimum price per square meter for that $(x, y)$ pair. A vectorized variant \texttt{ScanResult\_U2331760J\_vectorized.csv} is also produced, which produces identical results using the vectorized loading path.
 
 
 % =============================================================
