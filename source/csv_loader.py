@@ -1,15 +1,8 @@
-"""
-csv_loader.py - Loads a CSV file into a ColumnStore.
-
-Column types can be provided via a schema dict or auto-detected from the data.
-"""
-
 import csv
 from column_store import ColumnStore
 
 
 def _auto_detect_type(value):
-    """Detect type of a string value: tries int, then float, then str."""
     try:
         int(value)
         return "int"
@@ -23,15 +16,10 @@ def _auto_detect_type(value):
 
 
 def _detect_schema(filepath, sample_rows=100):
-    """
-    Auto-detect column types by sampling the first N rows.
-    Returns (header_list, schema_dict) where schema maps column -> type.
-    """
     with open(filepath, "r", encoding="utf-8") as f:
         reader = csv.reader(f)
         header = [col.strip() for col in next(reader)]
 
-        # Track detected types per column
         col_types = {name: set() for name in header}
 
         for i, row in enumerate(reader):
@@ -41,7 +29,6 @@ def _detect_schema(filepath, sample_rows=100):
                 if j < len(row) and row[j].strip():
                     col_types[name].add(_auto_detect_type(row[j].strip()))
 
-    # Resolve final type per column
     schema = {}
     for name in header:
         types = col_types[name]
@@ -56,21 +43,16 @@ def _detect_schema(filepath, sample_rows=100):
 
 
 def _cast_value(raw, col_type):
-    """Cast a raw string value to the target column type."""
     raw = raw.strip()
     if col_type == "int":
         return int(float(raw))  # handles "123.0" -> 123
     elif col_type == "float":
         return float(raw)
     else:
-        return raw  # str columns are dictionary-encoded by ColumnStore
+        return raw
 
 
 def load_csv(filepath, schema=None):
-    """
-    Load a CSV file into a ColumnStore.
-    schema maps column_name -> "int"|"float"|"str". Auto-detected if None.
-    """
     if schema is None:
         header, schema = _detect_schema(filepath)
     else:
@@ -89,7 +71,7 @@ def load_csv(filepath, schema=None):
     col_arrays = [store._columns[name] for name in header]
     dicts = [store._dictionaries.get(name) for name in header]
 
-    # Append directly to column arrays for speed (bypass append_row overhead)
+    # Append directly to column arrays for speed (bypass append_row overhead).
     with open(filepath, "r", encoding="utf-8", newline="") as f:
         reader = csv.reader(f)
         next(reader)  # skip header

@@ -1,26 +1,10 @@
-"""
-column_store.py - Generic column-oriented storage and query engine.
-
-Usage:
-    store = ColumnStore()
-    store.add_column("price", "float")
-    store.add_column("town", "str")
-    result = (store.query()
-        .filter("year", "==", 2020)
-        .filter("town", "in", ["BEDOK", "CLEMENTI"])
-        .filter("area", ">=", 85)
-        .min("price_per_sqm"))
-"""
-
 class Dictionary:
-    """Maps string values to integer codes for compact storage."""
 
     def __init__(self):
         self._str_to_code = {}
         self._code_to_str = []
 
     def encode(self, value):
-        """Encode a string to an integer code. Adds to dict if new."""
         if value not in self._str_to_code:
             code = len(self._code_to_str)
             self._str_to_code[value] = code
@@ -28,11 +12,9 @@ class Dictionary:
         return self._str_to_code[value]
 
     def decode(self, code):
-        """Decode an integer code back to the original string."""
         return self._code_to_str[code]
 
     def get_code(self, value):
-        """Get code for a value, or -1 if not found."""
         return self._str_to_code.get(value, -1)
 
     def size(self):
@@ -40,12 +22,6 @@ class Dictionary:
 
 
 class ColumnStore:
-    """
-    Column-oriented storage and query engine.
-
-    Stores each column as a list. String columns are dictionary-encoded.
-    Supports derived columns, zone maps, and a chainable query API.
-    """
 
     TYPE_INT = "int"
     TYPE_FLOAT = "float"
@@ -60,14 +36,11 @@ class ColumnStore:
         self._zone_maps = {}
         self._zone_size = None
 
-    # Schema and loading
-
     def _invalidate_zone_maps(self):
         self._zone_maps = {}
         self._zone_size = None
 
     def add_column(self, name, col_type):
-        """Register a column with a name and type ("int", "float", "str")."""
         if name in self._columns:
             return
         self._columns[name] = []
@@ -77,7 +50,6 @@ class ColumnStore:
             self._dictionaries[name] = Dictionary()
 
     def append_value(self, col_name, raw_value):
-        """Append a value to a column (auto dictionary-encodes strings)."""
         if self._zone_maps:
             self._invalidate_zone_maps()
         if self._col_types[col_name] == self.TYPE_STR:
@@ -87,14 +59,12 @@ class ColumnStore:
             self._columns[col_name].append(raw_value)
 
     def append_row(self, row_dict):
-        """Append a full row as a dict of {col_name: value}."""
         for name in self._col_order:
             if name in row_dict:
                 self.append_value(name, row_dict[name])
         self.num_rows += 1
 
     def add_derived_column(self, name, col_type, values):
-        """Add a pre-computed derived column (e.g. price/area)."""
         if len(values) != self.num_rows:
             raise ValueError(
                 f"Derived column '{name}' has {len(values)} values, "
@@ -107,7 +77,6 @@ class ColumnStore:
             self._col_order.append(name)
 
     def sort_by(self, columns):
-        """Sort all columns by the given key columns."""
         if not columns or self.num_rows <= 1:
             return
         for name in columns:
@@ -127,7 +96,6 @@ class ColumnStore:
             self._invalidate_zone_maps()
 
     def build_zone_maps(self, zone_size=4096, columns=None):
-        """Build min-max zone maps for selected columns."""
         if zone_size <= 0:
             raise ValueError("zone_size must be > 0")
 
@@ -174,7 +142,6 @@ class ColumnStore:
         return rows
 
     def zone_mask_for_predicate(self, col_name, op, value):
-        """Return a bool mask of zones that may contain matches."""
         if col_name not in self._zone_maps:
             return None
 
@@ -204,26 +171,19 @@ class ColumnStore:
             mask.append(keep)
         return mask
 
-    # Access
-
     def get_column(self, name):
-        """Get raw column list by name (encoded ints for str columns)."""
         return self._columns[name]
 
     def get_value(self, col_name, row_idx):
-        """Get a single raw value."""
-        col = self._columns[col_name]
-        return col[row_idx]
+        return self._columns[col_name][row_idx]
 
     def get_decoded(self, col_name, row_idx):
-        """Get a value, decoding strings from dictionary encoding."""
         val = self.get_value(col_name, row_idx)
         if col_name in self._dictionaries:
             return self._dictionaries[col_name].decode(val)
         return val
 
     def get_dictionary(self, col_name):
-        """Get Dictionary object for a string column (or None)."""
         return self._dictionaries.get(col_name)
 
     def get_type(self, col_name):
@@ -236,36 +196,25 @@ class ColumnStore:
         return name in self._columns
 
     def materialize_row(self, row_idx):
-        """Late materialization: reconstruct a full row with decoded strings."""
         return {name: self.get_decoded(name, row_idx)
                 for name in self._col_order}
 
-    # Query API
-
     def query(self):
-        """Start a chainable query. Returns a Query object."""
         return Query(self)
 
 
 class Query:
-    """Chainable query builder for ColumnStore (filter, aggregate, select)."""
 
     def __init__(self, store):
         self._store = store
         self._predicates = []  # list of (col_name, op, value)
 
     def filter(self, col_name, op, value):
-        """
-        Add a filter predicate. Returns self for chaining.
-
-        Supported ops: "==" "!=" ">" ">=" "<" "<=" "in" "not_in"
-        String columns are resolved to dictionary codes automatically.
-        """
+        # ops: "==" "!=" ">" ">=" "<" "<=" "in" "not_in"
         self._predicates.append((col_name, op, value))
         return self
 
     def _build_mask(self):
-        """Apply all predicates and return list of matching row indices."""
         store = self._store
         n = store.num_rows
 
@@ -311,14 +260,13 @@ class Query:
 
             surviving = store.candidate_rows_from_zone_mask(zone_mask)
         else:
-            # Start with all rows
             surviving = list(range(n))
 
         for col_name, op, value in self._predicates:
             col = store.get_column(col_name)
             dictionary = store.get_dictionary(col_name)
 
-            # For string columns, resolve values to dictionary codes
+            # For string columns, resolve values to dictionary codes.
             if dictionary and op in ("==", "="):
                 code = dictionary.get_code(value)
                 if code == -1:
@@ -353,7 +301,6 @@ class Query:
                 surviving = [i for i in surviving if col[i] not in codes]
                 continue
 
-            # Numeric / non-encoded comparisons
             if op in ("==", "="):
                 surviving = [i for i in surviving if col[i] == value]
             elif op in ("!=", "<>"):
@@ -379,15 +326,12 @@ class Query:
         return surviving
 
     def execute(self):
-        """Execute the query and return list of matching row indices."""
         return self._build_mask()
 
     def count(self):
-        """Return the number of rows matching all predicates."""
         return len(self._build_mask())
 
     def min(self, col_name):
-        """Return (row_index, min_value) for matching rows, or (None, None)."""
         indices = self._build_mask()
         if not indices:
             return None, None
@@ -401,7 +345,6 @@ class Query:
         return best_idx, best_val
 
     def max(self, col_name):
-        """Return (row_index, max_value) for matching rows, or (None, None)."""
         indices = self._build_mask()
         if not indices:
             return None, None
@@ -415,7 +358,6 @@ class Query:
         return best_idx, best_val
 
     def sum(self, col_name):
-        """Sum values in col_name among matching rows."""
         indices = self._build_mask()
         if not indices:
             return 0
@@ -423,7 +365,6 @@ class Query:
         return sum(col[i] for i in indices)
 
     def avg(self, col_name):
-        """Average of values in col_name among matching rows."""
         indices = self._build_mask()
         if not indices:
             return None
@@ -432,7 +373,6 @@ class Query:
         return total / len(indices)
 
     def select(self, columns=None):
-        """Return matching rows as a list of dicts. Defaults to all columns."""
         indices = self._build_mask()
         store = self._store
         if columns is None:
@@ -443,7 +383,6 @@ class Query:
         ]
 
     def to_column_store(self):
-        """Return matching rows as a new ColumnStore."""
         indices = self._build_mask()
         store = self._store
         new_store = ColumnStore()

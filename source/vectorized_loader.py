@@ -1,20 +1,12 @@
-"""
-vectorized_loader.py - Vectorized out-of-core CSV loader.
-
-Reads the CSV in fixed-size batches (vectors) as ColumnStore chunks.
-"""
-
 import csv
 from column_store import ColumnStore
 from csv_loader import _cast_value, _detect_schema
 
 
-# Number of rows per batch.
 VECTOR_SIZE = 4096
 
 
 def iter_load_vectors(filepath, schema=None, vector_size=VECTOR_SIZE):
-    """Yield ColumnStore batches of up to vector_size rows with no filtering."""
     if schema is None:
         header, schema = _detect_schema(filepath)
     else:

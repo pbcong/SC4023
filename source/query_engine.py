@@ -1,17 +1,3 @@
-"""
-query_engine.py - (x, y) grid scan over a column store.
-
-For each (x, y) in the grid:
-    SELECT MIN(agg_col) WHERE <pre_filters>
-      AND range_col IN [range_start, range_start+x-1]
-      AND sweep_col >= y
-Keep results where rounded MIN <= threshold.
-
-Two implementations:
-  run_query_naive: uses the Query API directly, simple but slow.
-  run_query: optimized with incremental range accumulation and sweep.
-"""
-
 from collections import defaultdict
 
 
@@ -19,10 +5,6 @@ def run_query_naive(store, pre_filters,
                     range_col, range_start, x_min, x_max,
                     sweep_col, y_min, y_max,
                     agg_col, threshold=None, range_cap=None):
-    """
-    Naive baseline: builds a fresh query for every (x, y) pair and calls .min().
-    Simpler but slower than run_query.
-    """
     results = {}
 
     for x in range(x_min, x_max + 1):
@@ -53,16 +35,7 @@ def run_query(store, pre_filters,
               range_col, range_start, x_min, x_max,
               sweep_col, y_min, y_max,
               agg_col, threshold=None, range_cap=None, verbose=True):
-    """
-    Optimized query using raw column access.
-
-    Two key optimizations:
-    1. Incremental range accumulation: x=2 reuses x=1 candidates.
-    2. Sweep with running min: answers all y values in one pass.
-
-    Note: sweep_col must be an integer column (values used as array indices).
-    """
-    # Phase 1: Pre-filter candidates using the Query API
+    # Phase 1: pre-filter by year/town, then group by month.
     q = store.query()
     for col, op, val in pre_filters:
         q = q.filter(col, op, val)
@@ -76,21 +49,18 @@ def run_query(store, pre_filters,
             print(f"  Found 0 valid (x, y) pairs")
         return {}
 
-    # Get raw column arrays for direct access
     range_vals = store.get_column(range_col)
     sweep_vals = store.get_column(sweep_col)
     agg_vals = store.get_column(agg_col)
 
-    # Group candidates by range_col value
     candidates_by_range = defaultdict(list)
     for i in candidate_rows:
         candidates_by_range[range_vals[i]].append(i)
 
-    # Determine max sweep value for array sizing
     max_sweep = max(sweep_vals[i] for i in candidate_rows)
     max_sweep = max(max_sweep, y_max)
 
-    # Phase 2: Optimized (x, y) loop
+    # Phase 2: incremental month accumulation + area sweep with running min.
     best_agg = [float("inf")] * (max_sweep + 1)
     best_row = [-1] * (max_sweep + 1)
     results = {}
@@ -114,7 +84,7 @@ def run_query(store, pre_filters,
         if upper > last_added_upper:
             last_added_upper = upper
 
-        # Sweep from high to low, tracking running min
+        # Sweep from high to low, tracking running min.
         run_min = float("inf")
         run_min_row = -1
 

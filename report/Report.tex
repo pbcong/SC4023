@@ -91,7 +91,7 @@ String columns such as \texttt{town}, \texttt{flat\_type}, and \texttt{flat\_mod
 We define an explicit schema (column name $\to$ \texttt{int}/\texttt{float}/\texttt{str}) to avoid per-row type inference. After loading, three derived columns are added: \texttt{year}, \texttt{month\_num} (both parsed from \texttt{month}), and \texttt{price\_per\_sqm} (\texttt{resale\_price / floor\_area\_sqm}). The CSV is loaded via Python's \texttt{csv} module using direct per-column appends (reducing load time from 4.24\,s to 2.73\,s, $1.55\times$ faster). String values are dictionary-encoded on the fly.
 
 \subsection{Exception Handling}
-The program skips malformed CSV rows, returns $-1$ for unknown dictionary values (causing an empty result), and reports ``No result'' when no valid $(x, y)$ pairs are found.
+The program skips malformed CSV rows, returns $-1$ for unknown dictionary values (causing an empty result), and reports 0 valid $(x, y)$ pairs when none meet the threshold.
 
 
 % =============================================================

@@ -1,13 +1,3 @@
-"""
-main.py - HDB Resale Flat Column-Store Query Engine entry point.
-
-Usage:
-    python3 main.py <matriculation_number> [csv_file_path]
-    python3 main.py U2331760J
-    python3 main.py U2331760J /path/to/data.csv
-    python3 main.py U2331760J --no-sort --no-zonemap
-"""
-
 import sys
 import os
 import time
@@ -17,10 +7,6 @@ from vectorized_loader import iter_load_vectors
 from query_engine import run_query, run_query_naive
 
 
-# ================================================================
-# HDB-SPECIFIC CONFIGURATION
-# ================================================================
-
 TOWN_MAP = {
     0: "BEDOK",      1: "BUKIT PANJANG",  2: "CLEMENTI",
     3: "CHOA CHU KANG", 4: "HOUGANG",     5: "JURONG WEST",
@@ -28,7 +14,6 @@ TOWN_MAP = {
     9: "YISHUN",
 }
 
-# Schema for the HDB resale CSV
 HDB_SCHEMA = {
     "month": "str",
     "town": "str",
@@ -48,7 +33,6 @@ THRESHOLD = 4725
 
 
 def _measure_time_and_peak_mem(func, *args, **kwargs):
-    """Run func and return (result, elapsed_seconds, peak_bytes)."""
     tracemalloc.start()
     t0 = time.time()
     result = func(*args, **kwargs)
@@ -63,7 +47,6 @@ def _bytes_to_mib(num_bytes):
 
 
 def _parse_month_value(raw):
-    """Parse month value in either 'YYYY-MM' or 'Mon-YY' format."""
     left, right = raw.split("-", 1)
     left = left.strip()
     right = right.strip()
@@ -83,7 +66,6 @@ def _parse_month_value(raw):
 
 
 def parse_matric(matric_num):
-    """Parse matriculation number -> (target_year, start_month, towns)."""
     digits = [int(c) for c in matric_num if c.isdigit()]
     if len(digits) < 2:
         raise ValueError(f"'{matric_num}' has fewer than 2 digits")
@@ -100,7 +82,6 @@ def parse_matric(matric_num):
 
 
 def post_load_transform(store):
-    """Add year, month_num, and price_per_sqm derived columns."""
     n = store.num_rows
     years, month_nums = [], []
     for i in range(n):
@@ -119,7 +100,6 @@ def post_load_transform(store):
 
 
 def apply_layout_optimizations(store, use_sort=True, use_zone_maps=True):
-    """Apply sorted layout and zone maps."""
     if use_sort:
         store.sort_by(["year", "month_num", "town"])
     if use_zone_maps:
@@ -130,7 +110,6 @@ def apply_layout_optimizations(store, use_sort=True, use_zone_maps=True):
 
 
 def write_hdb_results(filepath, store, results):
-    """Write the HDB query results to CSV in the required format."""
     header = ("(x, y),Year,Month,Town,Block,Floor_Area,"
               "Flat_Model,Lease_Commence_Date,Price_Per_Square_Meter")
 
@@ -151,10 +130,6 @@ def write_hdb_results(filepath, store, results):
     print(f"Results written to {filepath}")
     print(f"  Total valid (x, y) pairs: {len(sorted_keys)}")
 
-
-# ================================================================
-# MAIN
-# ================================================================
 
 def main():
     args = sys.argv[1:]
@@ -200,7 +175,6 @@ def main():
         threshold=THRESHOLD, range_cap=12,
     )
 
-    # Load data
     print("Loading data...")
     t0 = time.time()
     store = load_csv(input_file, schema=HDB_SCHEMA)
@@ -213,7 +187,6 @@ def main():
     print(f"  Zone maps enabled: {use_zone_maps}")
     print()
 
-    # Example: min price_per_sqm with filters
     print("Example query: MIN(price_per_sqm) WHERE year=2020, "
           "month in [6,8], town in matched, area >= 85")
     row_idx, min_val = (store.query()
@@ -231,14 +204,12 @@ def main():
               f"price/sqm = {min_val:.2f}")
     print()
 
-    # Example: count matching records
     count = (store.query()
         .filter("year", "==", target_year)
         .filter("town", "in", towns)
         .count())
     print(f"  Records in {target_year} for matched towns: {count}")
 
-    # Example: average price
     avg = (store.query()
         .filter("year", "==", target_year)
         .filter("town", "==", towns[0])
@@ -248,7 +219,6 @@ def main():
               f"${avg:,.0f}")
     print()
 
-    # Mode 1: Full Load + Optimized Query
     print("=" * 50)
     print("MODE 1: Full Load + Optimized Query")
     print("=" * 50)
@@ -267,7 +237,6 @@ def main():
     print(f"  Write time: {t_write:.3f}s")
     print()
 
-    # Mode 2: Naive Baseline
     print("=" * 50)
     print("MODE 2: Naive Baseline (Generic Query API)")
     print("=" * 50)
@@ -289,7 +258,6 @@ def main():
         print(f"  Speedup: {t_naive / t_query:.1f}x faster with optimized")
     print()
 
-    # Mode 3: Vectorized (chunked full pipeline)
     print("=" * 50)
     print("MODE 3: Vectorized (Fair Chunked Full Pipeline)")
     print("=" * 50)
@@ -347,7 +315,6 @@ def main():
         print(f"  Differing keys: {sorted(diff)[:10]}...")
     print()
 
-    # Summary
     print("=" * 50)
     print("TIMING SUMMARY")
     print("=" * 50)
